@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(rm /Users/daominhhiep/Desktop/Extension/NanoTranslator/nanotranslator-chrome-store.zip)",
+      "Bash(zip -r ../nanotranslator-chrome-store.zip .)",
+      "Bash(sips -g pixelWidth -g pixelHeight \"/Users/daominhhiep/Desktop/Extension/NanoTranslator/assets/screen/image.original.png\")"
+    ]
+  }
+}

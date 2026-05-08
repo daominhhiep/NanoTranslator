@@ -1,0 +1,27 @@
+import { resolve } from "node:path";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+    sourcemap: true,
+    rollupOptions: {
+      input: {
+        popup: resolve(__dirname, "popup.html"),
+        options: resolve(__dirname, "options.html"),
+        sidepanel: resolve(__dirname, "sidepanel.html"),
+        background: resolve(__dirname, "src/background/index.ts"),
+        content: resolve(__dirname, "src/content/index.ts")
+      },
+      output: {
+        entryFileNames: "assets/[name].js",
+        chunkFileNames: "assets/[name].js",
+        assetFileNames: "assets/[name][extname]"
+      }
+    }
+  },
+  test: {
+    environment: "node"
+  }
+});

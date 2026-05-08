@@ -1,0 +1,134 @@
+
+<style>
+  .scene { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 2rem; }
+  .article-text { font-size: 15px; line-height: 1.8; color: var(--color-text-primary); max-width: 520px; }
+  .highlight { background: #B5D4F4; color: #042C53; border-radius: 2px; padding: 0 2px; cursor: pointer; position: relative; }
+  .tooltip { display: inline-block; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 10px 14px; font-size: 13px; min-width: 220px; max-width: 300px; vertical-align: top; margin-left: 8px; }
+  .tooltip-lang { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .tooltip-lang span { background: var(--color-background-secondary); padding: 1px 6px; border-radius: var(--border-radius-md); }
+  .tooltip-result { font-size: 14px; color: var(--color-text-primary); font-weight: 500; margin-bottom: 6px; }
+  .tooltip-actions { display: flex; gap: 8px; margin-top: 6px; }
+  .tooltip-actions button { font-size: 11px; color: var(--color-text-secondary); background: var(--color-background-secondary); border: none; border-radius: var(--border-radius-md); padding: 3px 8px; cursor: pointer; }
+  .tooltip-pin { position: absolute; bottom: -6px; left: 24px; width: 10px; height: 10px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-secondary); border-bottom: 0.5px solid var(--color-border-secondary); transform: rotate(45deg); }
+
+  .state-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .state-group { margin-bottom: 24px; }
+
+  .tooltip-loading .tooltip-result { color: var(--color-text-tertiary); }
+  .loading-bar { height: 4px; background: var(--color-background-secondary); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+  .loading-fill { height: 100%; width: 55%; background: #378ADD; border-radius: 2px; animation: load 1.2s ease-in-out infinite alternate; }
+  @keyframes load { from { width: 20%; } to { width: 80%; } }
+
+  .tooltip-error .tooltip-result { color: var(--color-text-danger); font-weight: 400; }
+</style>
+
+<h2 class="sr-only">Mockup UI các trạng thái tooltip của Hover Translator</h2>
+
+<div class="scene">
+  <p style="font-size: 12px; color: var(--color-text-tertiary); margin: 0 0 20px;">Mô phỏng các trạng thái tooltip khi người dùng bôi đen văn bản trên trang web</p>
+
+  <!-- STATE 1: Normal result -->
+  <div class="state-group">
+    <p class="state-label">Trạng thái 1 — Dịch thành công</p>
+    <div class="article-text">
+      The researchers found that
+      <span class="highlight" style="position: relative; display: inline-block;">
+        machine learning models
+        <span style="position: absolute; bottom: calc(100% + 10px); left: 0; z-index: 10; display: block;">
+          <div class="tooltip">
+            <div class="tooltip-pin"></div>
+            <div class="tooltip-lang">
+              <span>EN</span> → <span>VI</span>
+              <i class="ti ti-language" style="font-size:13px; margin-left: auto;" aria-hidden="true"></i>
+            </div>
+            <div class="tooltip-result">các mô hình học máy</div>
+            <div class="tooltip-actions">
+              <button><i class="ti ti-copy" style="font-size:11px" aria-hidden="true"></i> Sao chép</button>
+              <button><i class="ti ti-volume" style="font-size:11px" aria-hidden="true"></i> Phát âm</button>
+              <button><i class="ti ti-pin" style="font-size:11px" aria-hidden="true"></i> Ghim</button>
+            </div>
+          </div>
+        </span>
+      </span>
+      often require large datasets to perform well.
+    </div>
+  </div>
+
+  <!-- STATE 2: Loading -->
+  <div class="state-group">
+    <p class="state-label">Trạng thái 2 — Đang dịch</p>
+    <div class="article-text">
+      Scientists discovered a new
+      <span class="highlight" style="position: relative; display: inline-block;">
+        quantum entanglement phenomenon
+        <span style="position: absolute; bottom: calc(100% + 10px); left: 0; z-index: 10; display: block;">
+          <div class="tooltip tooltip-loading">
+            <div class="tooltip-pin"></div>
+            <div class="tooltip-lang">
+              <span>EN</span> → <span>VI</span>
+            </div>
+            <div class="tooltip-result">Đang dịch...</div>
+            <div class="loading-bar"><div class="loading-fill"></div></div>
+          </div>
+        </span>
+      </span>
+      in laboratory conditions.
+    </div>
+  </div>
+
+  <!-- STATE 3: Error — model not ready -->
+  <div class="state-group">
+    <p class="state-label">Trạng thái 3 — Model chưa sẵn sàng</p>
+    <div class="article-text">
+      The
+      <span class="highlight" style="background: #F5C4B3; color: #4A1B0C; position: relative; display: inline-block;">
+        neural network architecture
+        <span style="position: absolute; bottom: calc(100% + 10px); left: 0; z-index: 10; display: block;">
+          <div class="tooltip tooltip-error">
+            <div class="tooltip-pin" style="background: var(--color-background-primary);"></div>
+            <div class="tooltip-lang">
+              <i class="ti ti-alert-circle" style="font-size:13px; color: var(--color-text-danger);" aria-hidden="true"></i>
+              <span style="color: var(--color-text-danger);">Model chưa tải xong</span>
+            </div>
+            <div class="tooltip-result">Gemini Nano đang tải (~2 phút).</div>
+            <div class="tooltip-actions">
+              <button><i class="ti ti-refresh" style="font-size:11px" aria-hidden="true"></i> Thử lại</button>
+            </div>
+          </div>
+        </span>
+      </span>
+      was designed by researchers at MIT.
+    </div>
+  </div>
+
+  <!-- Popup settings mini -->
+  <div style="margin-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 20px;">
+    <p class="state-label">Popup settings (extension icon)</p>
+    <div style="background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; max-width: 260px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+        <i class="ti ti-language" style="font-size: 18px; color: var(--color-text-secondary);" aria-hidden="true"></i>
+        <span style="font-size: 14px; font-weight: 500;">Hover Translator</span>
+        <span style="margin-left: auto; font-size: 11px; background: #E1F5EE; color: #085041; padding: 2px 7px; border-radius: var(--border-radius-md);">on</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 10px;">
+        <span style="color: var(--color-text-secondary);">Dịch sang</span>
+        <select style="font-size: 12px; padding: 3px 6px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-primary);">
+          <option>Tiếng Việt</option>
+          <option>English</option>
+          <option>日本語</option>
+        </select>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 10px;">
+        <span style="color: var(--color-text-secondary);">Kích hoạt bằng</span>
+        <select style="font-size: 12px; padding: 3px 6px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-primary);">
+          <option>Bôi đen</option>
+          <option>Alt + hover</option>
+        </select>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+        <span style="color: var(--color-text-secondary);">Giới hạn ký tự</span>
+        <span style="font-weight: 500;">500</span>
+      </div>
+    </div>
+  </div>
+</div>
