@@ -5,7 +5,12 @@ export interface SelectionValidation {
 }
 
 export function normalizeSelectionText(input: string): string {
-  return input.replace(/\s+/g, " ").trim();
+  return input
+    .replace(/\r\n?/g, "\n")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 export function validateSelectionText(input: string, limit: number, minLength = 5): SelectionValidation {

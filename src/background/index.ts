@@ -21,10 +21,14 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, sender, sendRespo
 
 async function handleMessage(message: RuntimeMessage, sender: chrome.runtime.MessageSender): Promise<unknown> {
   switch (message.type) {
-    case "OPEN_TOOL":
+    case "OPEN_TOOL": {
+      const tabId = sender.tab?.id;
+      const windowId = sender.tab?.windowId;
+      const openPromise = openSidePanelSync(tabId, windowId);
       await persistSelection(message.payload);
-      await openSidePanel(sender.tab?.id);
+      await openPromise;
       return message.payload;
+    }
 
     case "GET_SELECTION":
       return getPersistedSelection();
@@ -50,16 +54,12 @@ async function getPersistedSelection(): Promise<SelectedTextPayload | null> {
   return result[SESSION_SELECTION_KEY] ?? null;
 }
 
-async function openSidePanel(tabId?: number): Promise<void> {
-  if (!tabId) {
-    return;
+function openSidePanelSync(tabId?: number, windowId?: number): Promise<void> {
+  if (tabId !== undefined) {
+    return chrome.sidePanel.open({ tabId });
   }
-
-  await chrome.sidePanel.setOptions({
-    tabId,
-    path: "sidepanel.html",
-    enabled: true
-  });
-
-  await chrome.sidePanel.open({ tabId });
+  if (windowId !== undefined) {
+    return chrome.sidePanel.open({ windowId });
+  }
+  return Promise.reject(new Error("Unable to open side panel: no tab or window context."));
 }

@@ -141,7 +141,12 @@ function getSelectionRect(range: Range): DOMRect | null {
 }
 
 function normalizeSelectionText(input: string): string {
-  return input.replace(/\s+/g, " ").trim();
+  return input
+    .replace(/\r\n?/g, "\n")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function validateSelectionText(input: string, limit: number, minLength = 5) {
@@ -289,24 +294,93 @@ async function translateOnPage(wasTrimmed: boolean): Promise<void> {
 
   const requestId = ++translateRequestId;
   const initialSourceLanguage = settings.sourceLanguageMode === "auto" ? "auto" : settings.sourceLanguage;
+  const text = activeSelection.text;
   showTranslationTooltip("loading", "Detecting language...", wasTrimmed, initialSourceLanguage);
 
   try {
-    const sourceLanguage = await resolveDirectSourceLanguage(activeSelection.text, settings);
+    const sourceLanguage = await resolveDirectSourceLanguage(text, settings);
     if (requestId !== translateRequestId) {
       return;
     }
     showTranslationTooltip("loading", "Translating on-device...", wasTrimmed, sourceLanguage);
-    const output = await runDirectTranslate(activeSelection.text, settings, sourceLanguage);
+
+    const phoneticPromise: Promise<string | null> =
+      isShortPhrase(text) && sourceLanguage !== settings.targetLanguage
+        ? fetchPhonetic(text, sourceLanguage)
+        : Promise.resolve(null);
+
+    const output = await runDirectTranslate(text, settings, sourceLanguage);
     if (requestId !== translateRequestId) {
       return;
     }
     showTranslationTooltip("success", output, wasTrimmed, sourceLanguage);
+
+    void phoneticPromise.then((phonetic) => {
+      if (requestId !== translateRequestId || !phonetic) {
+        return;
+      }
+      showTranslationTooltip("success", output, wasTrimmed, sourceLanguage, phonetic);
+    });
   } catch (error) {
     if (requestId !== translateRequestId) {
       return;
     }
     showTranslationTooltip("error", error instanceof Error ? error.message : String(error), wasTrimmed, initialSourceLanguage);
+  }
+}
+
+function isShortPhrase(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length > 50) {
+    return false;
+  }
+  if (/[.!?。！？]\s/.test(trimmed)) {
+    return false;
+  }
+  return trimmed.split(/\s+/).length <= 3;
+}
+
+async function fetchPhonetic(text: string, sourceLanguage: string): Promise<string | null> {
+  const ai = globalThis as typeof globalThis & {
+    LanguageModel?: {
+      availability?: (options?: Record<string, unknown>) => Promise<unknown>;
+      create?: (options?: Record<string, unknown>) => Promise<any>;
+    };
+  };
+
+  if (!ai.LanguageModel?.create) {
+    return null;
+  }
+
+  const sessionOptions = {
+    expectedInputs: [{ type: "text", languages: ["en"] }],
+    expectedOutputs: [{ type: "text", languages: ["en"] }]
+  };
+
+  try {
+    const availability = await ai.LanguageModel.availability?.(sessionOptions);
+    if (availability !== "available") {
+      return null;
+    }
+
+    const session = await ai.LanguageModel.create(sessionOptions);
+    const languageName = languageDisplayName(sourceLanguage);
+    const prompt = `Respond with only the IPA phonetic transcription enclosed in slashes, like /həˈloʊ/. No other text, no translation, no explanation. If unknown, respond exactly: NONE\n\n${languageName}: ${text}`;
+    const raw = String(await session.prompt(prompt));
+    session.destroy?.();
+
+    const match = raw.match(/\/[^/\n]+\//);
+    return match ? match[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+function languageDisplayName(code: string): string {
+  try {
+    return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code;
+  } catch {
+    return code;
   }
 }
 
@@ -403,7 +477,7 @@ async function runDirectTranslate(text: string, currentSettings: ExtensionSettin
   }
 }
 
-function showTranslationTooltip(status: "loading" | "success" | "error", message: string, wasTrimmed: boolean, sourceLanguage = settings?.sourceLanguage ?? "en"): void {
+function showTranslationTooltip(status: "loading" | "success" | "error", message: string, wasTrimmed: boolean, sourceLanguage = settings?.sourceLanguage ?? "en", phonetic: string | null = null): void {
   if (!activeSelection) {
     return;
   }
@@ -443,6 +517,13 @@ function showTranslationTooltip(status: "loading" | "success" | "error", message
         margin-bottom: 7px;
         color: #68758b;
         font-size: 11px;
+      }
+      .phonetic {
+        margin-bottom: 6px;
+        color: #4f5b73;
+        font-size: 12px;
+        font-style: italic;
+        overflow-wrap: anywhere;
       }
       .body {
         min-height: 24px;
@@ -490,6 +571,7 @@ function showTranslationTooltip(status: "loading" | "success" | "error", message
         <span>${sourceLanguage.toUpperCase()} -> ${settings?.targetLanguage.toUpperCase() ?? "VI"}</span>
         <span>${wasTrimmed ? `${settings?.characterLimit ?? 500} chars` : status}</span>
       </div>
+      ${phonetic ? `<div class="phonetic">${escapeHtml(phonetic)}</div>` : ""}
       <div class="body">${escapedMessage}</div>
       ${status === "loading" ? `<div class="bar"><span></span></div>` : ""}
       <div class="actions">
